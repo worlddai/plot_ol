@@ -65,6 +65,10 @@ function hideAbout() {
     document.getElementById("aboutContainer").style.visibility = "hidden";
 }
 
+function get(domId){
+    return document.getElementById(domId);
+}
+
 
 function activeDelBtn() {
     get('btn-delete').style.display = 'inline-block';
