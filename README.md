@@ -18,3 +18,17 @@
 ### 演示截图
 <img src="https://img-blog.csdnimg.cn/20190727133941159.png" width=840 height=640>
 
+### 编译
+```
+npm install  安装
+```
+
+
+```
+npm run start  开发者模式
+```
+
+
+```
+npm run build  发布
+```
