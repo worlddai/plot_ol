@@ -22,7 +22,7 @@
 - 实现序列化，可以按照自己的服务器存储格式修改序列号代码，实现保存和加载.参加
 
 ### 演示截图
-<img src="https://img-blog.csdnimg.cn/20190801185228982.png" width=1920 height=899>
+<img src="https://img-blog.csdnimg.cn/20190801185228982.png" width=1400 height=670>
 
 
 <img src="https://img-blog.csdnimg.cn/20190801184933359.png" width=375 height=812>
