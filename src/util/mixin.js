@@ -1,4 +1,4 @@
-//--fix dyj 多继承
+//--fix dyj 多继承。目前还有缺陷
 function mix(...mixins) {
     class Mix {
         constructor(...ags) {
@@ -26,8 +26,7 @@ function copyProperties(target, source,deep) {
             Object.defineProperty(target, key, desc);
         }
     }
-    if(deep && source.__proto__ && target.__proto__)
-    {
+    if (deep && source.__proto__ && target.__proto__) {
         target.__proto__ = source.__proto__;
 
         // for (let key2 of Reflect.ownKeys(source.__proto__)) {

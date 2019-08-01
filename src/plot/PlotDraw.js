@@ -5,15 +5,22 @@ import PlotFactory from './PlotFactory'
 import { distance } from './utils/plot_util'
 import Constants from './Constants'
 import FeatureEvent from './events/FeatureEvent'
+import DrawEvent from './events/DrawEvent'
+import { connectEvent, disconnectEvent } from '../util/core'
 export default class PlotDraw extends Observable {
 
+	/**
+	 * @classdesc 图元进行编辑的绘制的基类。
+	 * @author daiyujie
+	 * @constructs
+	 * @param {ol.Map} map 地图对象
+	 */
 	constructor(map) {
 		super();
 		this.points = null;
 		this.plot = null;
 		this.feature = null;
 		this.plotType = null;
-		this.plotParams = null;
 		this.mapViewport = null;
 		this.dblClickZoomInteraction = null;
 		var stroke = new ol.style.Stroke({ color: '#FF0000', width: 2 });
@@ -31,14 +38,12 @@ export default class PlotDraw extends Observable {
 		this.map = map;
 		this.mapViewport = this.map.getViewport();
 	}
-	activate(type, params) {
+	activate(type) {
 		this.deactivate();
 		this.deactivateMapTools();
-		this._ls_mapfirstclick = this.map.on("click", (e) => {
-			this.mapFirstClickHandler(e);
-		}).listener;
+
+		this._ls_mapfirstclick = connectEvent(this.map, "click", this.mapFirstClickHandler, this);
 		this.plotType = type;
-		this.plotParams = params;
 		this.drawOverlay.setMap(this.map)
 		// .addLayer();
 	}
@@ -50,7 +55,6 @@ export default class PlotDraw extends Observable {
 		this.plot = null;
 		this.feature = null;
 		this.plotType = null;
-		this.plotParams = null;
 		this.activateMapTools();
 	}
 
@@ -59,28 +63,33 @@ export default class PlotDraw extends Observable {
 	}
 	mapFirstClickHandler(e) {
 		this.points.push(e.coordinate);
-		this.plot = PlotFactory.createPlot(this.plotType, this.points, this.plotParams);
+		this.plot = PlotFactory.createPlot(this.plotType, this.points);
 		// this.plot = new LineString([[114.811935424807831,37.092847824096935],[120.811935424807831,45.092847824096935]])
 		this.feature = new ol.Feature(this.plot);
 		this.featureSource.addFeature(this.feature);
-		this.map.un("click", this._ls_mapfirstclick);
+		disconnectEvent(this.map,"click", this._ls_mapfirstclick);
+		this._ls_mapfirstclick = null;
+		this.dispatchEvent(new DrawEvent(DrawEvent.ADD_CONTROL_POINT,{
+			freehand:this.plot.freehand,
+			current:this.plot.getPointCount(),
+			total:this.plot.fixPointCount,
+			position:e.coordinate
+		}));
 		//
 		if (this.plot.fixPointCount == this.plot.getPointCount()) {
 			this.mapDoubleClickHandler(e);
 			return;
 		}
 		//
-		this._ls_mapNextClick = this.map.on("click", (e) => {
-			this.mapNextClickHandler(e)
-		}).listener;
+		this._ls_mapNextClick = connectEvent(this.map, 'click', this.mapNextClickHandler, this);
+		// this._ls_mapNextClick = this.map.on("click", (e) => {
+		// 	this.mapNextClickHandler(e)
+		// }).listener;
 		if (!this.plot.freehand) {
-			this._ls_dbclick = this.map.on("dblclick", (e) => {
-				this.mapDoubleClickHandler(e);
-			}).listener;
+			this._ls_dbclick = connectEvent(this.map, 'dblclick', this.mapDoubleClickHandler, this);
 		}
-		this._ls_pointmove = this.map.on('pointermove', (e) => {
-			this.mapMouseMoveHandler(e);
-		}).listener;
+		this._ls_pointmove = connectEvent(this.map, 'pointermove', this.mapMouseMoveHandler, this);
+
 		// goog.events.listen(this.mapViewport, P.Event.EventType.MOUSEMOVE,
 		// 	this.mapMouseMoveHandler, false, this);
 	}
@@ -96,6 +105,12 @@ export default class PlotDraw extends Observable {
 			this.points.push(coordinate);
 			this.plot.setPoints(this.points);
 		}
+		this.dispatchEvent(new DrawEvent(DrawEvent.ADDING_MOUSE_MOVE,{
+			freehand:this.plot.freehand,
+			current:this.plot.getPointCount(),
+			total:this.plot.fixPointCount,
+			position:e.coordinate
+		}));
 	}
 
 	mapNextClickHandler(e) {
@@ -105,6 +120,12 @@ export default class PlotDraw extends Observable {
 		}
 		this.points.push(e.coordinate);
 		this.plot.setPoints(this.points);
+		this.dispatchEvent(new DrawEvent(DrawEvent.ADD_CONTROL_POINT,{
+			freehand:this.plot.freehand,
+			current:this.plot.getPointCount(),
+			total:this.plot.fixPointCount,
+			position:e.coordinate
+		}));
 		if (this.plot.fixPointCount == this.plot.getPointCount()) {
 			this.mapDoubleClickHandler(e);
 			return;
@@ -122,12 +143,15 @@ export default class PlotDraw extends Observable {
 	}
 
 	disconnectEventHandlers() {
-		this.map.un("click", this._ls_mapfirstclick);
-		this.map.un("click", this._ls_mapNextClick);
-		this.map.un('pointermove', this._ls_pointmove);
-		// goog.events.unlisten(this.mapViewport, P.Event.EventType.MOUSEMOVE,
-		// 	this.mapMouseMoveHandler, false, this);
-		this.map.un("dblclick", this._ls_dbclick);
+		disconnectEvent(this.map, "click", this._ls_mapfirstclick);
+		disconnectEvent(this.map, "click", this._ls_mapNextClick);
+		disconnectEvent(this.map, 'pointermove', this._ls_pointmove);
+		disconnectEvent(this.map, "dblclick", this._ls_dbclick);
+
+		this._ls_mapfirstclick = null;
+		this._ls_mapNextClick = null;
+		this._ls_pointmove = null;
+		this._ls_dbclick = null;
 	}
 
 	drawEnd(feature) {
@@ -138,7 +162,6 @@ export default class PlotDraw extends Observable {
 		this.points = [];
 		this.plot = null;
 		this.plotType = null;
-		this.plotParams = null;
 		this.dispatchEvent(new FeatureEvent(FeatureEvent.DRAW_END, this.feature));
 		this.feature = null;
 	}

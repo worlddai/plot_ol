@@ -3,9 +3,15 @@ import * as ol from '../ol';
 import Constants from './Constants'
 import * as DomUtils from '../util/dom_util';
 import FeatureEvent from './events/FeatureEvent'
+import { connectEvent, disconnectEvent } from '../util/core'
 export default class PlotEdit extends ol.Observable {
 
-
+	/**
+	 * @classdesc 图元进行编辑的基类。用来创建控制点，绑定控制点事件，对feature的数据进行处理
+	 * @author daiyujie
+	 * @constructs
+	 * @param {ol.Map} map 地图对象
+	 */
 	constructor(map) {
 		if (!map) {
 			return;
@@ -27,6 +33,7 @@ export default class PlotEdit extends ol.Observable {
 		this._ls_pointdrag = null;
 		this._ls_pointerdown = null;
 		this._ls_pointup = null;
+		//--这个比较特殊。绑定在map.mapBrowserEventHandler_上
 		this._is_controlpoint_pointermove = null;
 
 	}
@@ -64,7 +71,7 @@ export default class PlotEdit extends ol.Observable {
 				var element = DomUtils.get(Constants.HELPER_CONTROL_POINT_DIV + '-' + i);
 				if (element) {
 					DomUtils.removeListener(element, 'mousedown', this.controlPointMouseDownHandler, this);
-					DomUtils.removeListener(element, 'mousemove', this.controlPointMouseMoveHandler2, this);
+					// DomUtils.removeListener(element, 'mousemove', this.controlPointMouseMoveHandler2, this);
 				}
 			}
 			this.controlPoints = null;
@@ -90,32 +97,32 @@ export default class PlotEdit extends ol.Observable {
 				id: id,
 				position: cPnts[i],
 				positioning: 'center-center',
-				element: element
+				element: element,
 			});
 			this.controlPoints.push(pnt);
 			this.map.addOverlay(pnt);
+			// debugger;
 			DomUtils.addListener(element, 'mousedown', this.controlPointMouseDownHandler, this);
-			DomUtils.addListener(element, 'mousemove', this.controlPointMouseMoveHandler2, this);
-
+			//--mobile
+			DomUtils.addListener(element, 'touchstart', this.controlPointMouseDownHandler, this);
 		}
-	};
+		//--fixdyj 赋值
+		this._is_controlpoint_pointermove = (e) => {
+			this.controlPointMouseMoveHandler(e);
+		}
+		//--fix dyj 在地图上无论怎么绑都无法触发。
+		//--因为被map屏蔽了
+		this.map.mapBrowserEventHandler_.addEventListener('pointermove', this._is_controlpoint_pointermove);
 
-	controlPointMouseMoveHandler2(e) {
-		e.stopImmediatePropagation();
 	};
 
 	controlPointMouseDownHandler(e) {
+		//--fix dyj屏蔽移动端上下滑动事件
+		e.preventDefault();
 		var id = e.target.id;
 		this.activeControlPointId = id;
-
-		if (this._is_controlpoint_pointermove)
-			this.map.un('pointermove',this._is_controlpoint_pointermove)
-
-		this._is_controlpoint_pointermove = this.map.on('pointermove', (e) => {
-			this.controlPointMouseMoveHandler(e);
-		}).listener
-
 		DomUtils.addListener(e.target, 'mouseup', this.controlPointMouseUpHandler, this);
+		DomUtils.addListener(e.target, 'touchend', this.controlPointMouseUpHandler, this);
 	};
 
 	controlPointMouseMoveHandler(e) {
@@ -130,11 +137,9 @@ export default class PlotEdit extends ol.Observable {
 	};
 
 	controlPointMouseUpHandler(e) {
-		this.map.un('pointermove', this._is_controlpoint_pointermove)
-		// this.map.un('pointerup', this._is_controlpoint_pointerup)
-
+		this.activeControlPointId = null;
 		DomUtils.removeListener(e.target, 'mouseup', this.controlPointMouseUpHandler, this);
-
+		DomUtils.removeListener(e.target, 'touchend', this.controlPointMouseUpHandler, this);
 	};
 
 	activate(plot) {
@@ -144,17 +149,17 @@ export default class PlotEdit extends ol.Observable {
 		}
 
 		var geom = plot.getGeometry();
-		if (!geom.isPlot()) {
+		if (!geom.isPlot || !geom.isPlot()) {
 			return;
 		}
 
 		this.deactivate();
 
 		this.activePlot = plot;
-		//
-		this._ls_pointermove = this.map.on("pointermove", (e) => {
-			this.plotMouseOverOutHandler(e)
-		}).listener;
+		//--fix dyj 开始既绑定feature的拖动事件
+		this._ls_pointermove = connectEvent(this.map,"pointermove", this.plotMouseOverOutHandler,this);
+		//--fix dyj 开始既绑定feature的拖动事件
+		this._ls_pointerdown = connectEvent(this.map,'pointerdown',this.plotMouseDownHandler,this);
 
 		this.initHelperDom();
 		//
@@ -164,8 +169,8 @@ export default class PlotEdit extends ol.Observable {
 		//--故强制刷新一帧
 		this.map.render();
 
-		
-		this.dispatchEvent(new FeatureEvent(FeatureEvent.ACTIVATE,this.activePlot));
+
+		this.dispatchEvent(new FeatureEvent(FeatureEvent.ACTIVATE, this.activePlot));
 	};
 
 	getControlPoints() {
@@ -175,7 +180,10 @@ export default class PlotEdit extends ol.Observable {
 		var geom = this.activePlot.getGeometry();
 		return geom.getPoints();
 	};
-
+	/**
+	 * @ignore
+	 * pc端移动到feature上改变指针样式
+	 */
 	plotMouseOverOutHandler(e) {
 		var feature = this.map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
 			return feature;
@@ -184,32 +192,35 @@ export default class PlotEdit extends ol.Observable {
 			if (!this.mouseOver) {
 				this.mouseOver = true;
 				this.map.getViewport().style.cursor = 'move';
-				this._ls_pointerdown = this.map.on('pointerdown', (e) => {
-					this.plotMouseDownHandler(e)
-				}).listener;
 			}
 		} else {
 			if (this.mouseOver) {
 				this.mouseOver = false;
 				this.map.getViewport().style.cursor = 'default';
-				this.map.un('pointerdown', this._ls_pointerdown);
 			}
 		}
 	};
 
 	plotMouseDownHandler(e) {
+		var feature = this.map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
+			return feature;
+		});
+
+		if (!feature || feature != this.activePlot)
+			return;
+		//--fix dyj 屏蔽浏览器上下滑动事件
+		e.preventDefault();
+
 		this.ghostControlPoints = this.getControlPoints();
 		this.startPoint = e.coordinate;
 		this.disableMapDragPan();
-		this._ls_pointup = this.map.on('pointerup', (e) => {
-			this.plotMouseUpHandler(e);
-		}).listener;
-		this._ls_pointdrag = this.map.on('pointerdrag', (e) => {
-			this.plotMouseMoveHandler(e);
-		}).listener;
+		this._ls_pointup = connectEvent(this.map,'pointerup', this.plotMouseUpHandler,this);
+		this._ls_pointdrag = connectEvent(this.map,'pointerdrag', this.plotMouseMoveHandler,this);
 	};
 
 	plotMouseMoveHandler(e) {
+		e.stopPropagation();
+		e.preventDefault();
 		var point = e.coordinate;
 		var dx = point[0] - this.startPoint[0];
 		var dy = point[1] - this.startPoint[1];
@@ -229,23 +240,33 @@ export default class PlotEdit extends ol.Observable {
 
 	plotMouseUpHandler(e) {
 		this.enableMapDragPan();
-		this.map.un('pointerup', this._ls_pointup);
-		this.map.un('pointerdrag', this._ls_pointdrag);
+		disconnectEvent(this.map,'pointerup', this._ls_pointup);
+		disconnectEvent(this.map,'pointerdrag', this._ls_pointdrag);
+
+		this._ls_pointup = null;
+		this._ls_pointdrag = null;
 	};
 
 	disconnectEventHandlers() {
-		this.map.un('pointermove', this._ls_pointermove);
-		this.map.un('pointermove', this._is_controlpoint_pointermove)
-		// this.map.un('pointerup', this._is_controlpoint_pointerup)
-		this.map.un('pointerdown', this._ls_pointerdown);
-		this.map.un('pointerup', this._ls_pointup);
-		this.map.un('pointerdrag', this._ls_pointdrag);
+		disconnectEvent(this.map,'pointermove', this._ls_pointermove);
+		disconnectEvent(this.map,'pointerdown', this._ls_pointerdown);
+		disconnectEvent(this.map,'pointerup', this._ls_pointup);
+		disconnectEvent(this.map,'pointerdrag', this._ls_pointdrag);
+		this._ls_pointermove = null;
+		this._ls_pointerdown = null;
+		this._ls_pointup = null;
+		this._ls_pointdrag = null;
+		//--fix dyj;这个事件解绑比较特殊,必须判定。不然会移除所有的监听器。干坏map
+		if(this._is_controlpoint_pointermove)
+		{
+		this.map.mapBrowserEventHandler_.removeEventListener('pointermove', this._is_controlpoint_pointermove);
+			this._is_controlpoint_pointermove = null;
+		}
 	};
 
 	deactivate() {
-		let temp_plot =  null;
-		if(this.activePlot)
-		{
+		let temp_plot = null;
+		if (this.activePlot) {
 			temp_plot = this.activePlot;
 		}
 		this.activePlot = null;
@@ -256,8 +277,8 @@ export default class PlotEdit extends ol.Observable {
 		this.activeControlPointId = null;
 		this.startPoint = null;
 
-		if(temp_plot)
-			this.dispatchEvent(new FeatureEvent(FeatureEvent.DEACTIVATE,temp_plot));
+		if (temp_plot)
+			this.dispatchEvent(new FeatureEvent(FeatureEvent.DEACTIVATE, temp_plot));
 	};
 
 	disableMapDragPan() {
@@ -280,8 +301,3 @@ export default class PlotEdit extends ol.Observable {
 		}
 	};
 }
-
-
-
-
-

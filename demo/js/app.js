@@ -15,6 +15,8 @@ var map;
 
 var ol = POL.OL;
 
+var g_op_feature = null;
+
 var center = ol.proj.transform([37.41, 8.82], 'EPSG:4326', 'EPSG:3857');
 
 function init() {
@@ -37,16 +39,23 @@ function init() {
 
     document.getElementById('btn-delete').onclick = function () {
         g_pol_layer.removeFeature(window.g_op_feature);
+        g_op_feature = null;
     };
 
     window.g_pol_layer = new POL.PlottingLayer(map);
 
     g_pol_layer.on(POL.FeatureOperatorEvent.ACTIVATE, function (e) {
         window.g_op_feature = e.feature_operator;
+        document.getElementById('style-input').value = JSON.stringify(g_op_feature.getStyle());
+        g_op_feature.iteratorAttribute(function (key) {
+            $('#property-show').append('<span>' + key + ' :</span><input value = ' + this.getAttribute(key) + '></input><br>')
+        }, g_op_feature)
         activeDelBtn();
     })
     g_pol_layer.on(POL.FeatureOperatorEvent.DEACTIVATE, function (e) {
         deactiveDelBtn();
+        document.getElementById('style-input').value = ""
+        $('#property-show').empty();
     })
 }
 
@@ -54,7 +63,7 @@ function init() {
 
 // 指定标绘类型，开始绘制。
 function activate(type) {
-    g_pol_layer.addPlot(type);
+    g_pol_layer.addFeature(type);
 };
 
 function showAbout() {
@@ -64,8 +73,15 @@ function showAbout() {
 function hideAbout() {
     document.getElementById("aboutContainer").style.visibility = "hidden";
 }
+function hideUpdate() {
+    document.getElementById("updateContainer").style.visibility = "hidden";
+}
+function showUpdate() {
+    document.getElementById("updateContainer").style.visibility = "visible";
+}
 
-function get(domId){
+
+function get(domId) {
     return document.getElementById(domId);
 }
 
@@ -76,4 +92,30 @@ function activeDelBtn() {
 
 function deactiveDelBtn() {
     get('btn-delete').style.display = 'none';
+}
+
+function plotOperator(method, no_need_feature) {
+    if (!g_op_feature) {
+        alert('请先选择一个标绘图元')
+        return;
+    }
+    g_pol_layer[method](g_op_feature);
+}
+function setStyle(params) {
+    if (!g_op_feature) {
+        alert('请先选择一个标绘图元')
+        return;
+    }
+    var styles_value = document.getElementById('style-input').value;
+    g_op_feature.setStyle(JSON.parse(styles_value))
+}
+function addAttribute() {
+    if (!g_op_feature) {
+        alert('请先选择一个标绘图元')
+        return;
+    }
+    var key = document.getElementById('attr-input-key').value;
+    var value = document.getElementById('attr-input-value').value;
+    if (key && value)
+    g_op_feature.setAttribute(key, value);
 }

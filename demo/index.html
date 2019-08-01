@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
     <title>PlotOL V1.0.1</title>
     <link rel="stylesheet" href="../dist/ol.css">
     <link rel="stylesheet" href="../dist/plottingol.css">
@@ -10,7 +11,7 @@
 <body onload="init()">
 <div id="map"></div>
 <div id="header">
-    <div id="logoandtitle">PlotOL动态标绘演示系统 V1.0.1（for OL6）参考原作者基于OL3博客https://blog.csdn.net/gispace<span id="aboutLabel" onclick="showAbout()">关 于</span></div>
+    <div id="logoandtitle">PlotOL动态标绘演示系统（已支持移动端） V1.0.1（for OL6）参考原作者基于OL3博客https://blog.csdn.net/gispace<span id="updateLabel" onclick="showUpdate()">更新记录</span> <span id="aboutLabel" onclick="showAbout()">关 于</span></div>
     <div id="version">— powered by PlotOL API V1.0.1 for OL6</div>
 </div>
 <div id="menu">
@@ -48,14 +49,50 @@
         <button type="button" onclick="activate(POL.PlotTypes.SQUAD_COMBAT)">分队战斗行动</button>
         <button type="button" onclick="activate(POL.PlotTypes.TAILED_SQUAD_COMBAT)">分队战斗行动（尾）</button>
     </div>
+    <div>
+        操作
+        <button type="button" onclick="plotOperator('moveUp')">上移</button>
+		<button type="button" onclick="plotOperator('moveDown')">下移</button>
+		<button type="button" onclick="plotOperator('setToTop')">置顶</button>
+		<button type="button" onclick="plotOperator('setToBottom')">置底</button>
+		<button type="button" onclick="plotOperator('clearFeatures',true)">全部清除</button>
+    </div>
+    <div>
+        添加属性
+        <input placeholder="输入key" id="attr-input-key"></input>
+		<input placeholder="输入value" id="attr-input-value"></input>
+		<button type="button" onclick="addAttribute()">添加属性</button>
+		
+    </div>
+    <div>
+        样式
+		<input id="style-input"></input>
+		<button type="button" onclick="setStyle()">设置样式</button>
+		<div id='property-show'>
+
+		</div>
+    </div>
 </div>
-<div id="aboutContainer">
-    <div id="aboutTitle">关于...<span id="closeBtn" onclick="hideAbout()">X</span></div>
-    <div id="aboutContent">
+<div id="aboutContainer"  class = "show-container">
+    <div id="aboutTitle" class = "show-Title">关于...<span id="closeBtn" onclick="hideAbout()">X</span></div>
+    <div id="aboutContent" class = "show-Content">
         <p class="aboutText">伴随着全国信息化进程的不断推进，以GIS为基础的动态标绘、资源部署、情报展示、应急指挥等可视化动态图形展示在应急、军事、海洋、地震、民政等行业得到越来越多的应用。标绘已经成为一种新的数据表达方式。</p>
         <p class="aboutText">PlotOL是GISpace动态标绘的OpenLayers6版本，旨在为基于开源GIS技术的项目提供标绘API>ArcGIS Flex版本</a>）。当前版本实现了常用符号的绘制，下一版本将实现符号编辑、序列化和反序列化。</p>
         <p class="aboutText">欢迎使用和反馈，开发者：@追逐丶 （QQ：576981389） 博客：https://blog.csdn.net/qq_29722281 </p>
         <p class="aboutText">参考作者博客https://blog.csdn.net/gispace 作者是基于ol3。我将其改装为ol6,并且封装了一层</p>
+    
+    </div>
+</div>
+<div id="updateContainer"  class = "show-container">
+    <div id="aboutTitle" class = "show-Title">更新记录<span id="closeBtn" onclick="hideUpdate()">X</span></div>
+    <div id="aboutContent" class = "show-Content">
+        <p class="aboutText">2019-07-27 :初版提交</p>
+        <p class="aboutText">2019-08-01 :</p>
+        
+        <p class="aboutText">1 全面支持移动端</p>
+        <p class="aboutText">2 新增图元层级操作</p>
+        <p class="aboutText">3 新增样式，属性编辑</p>
+        <p class="aboutText">4 实现序列化，可以按照自己的服务器存储格式修改序列号代码，实现保存和加载.参加</p>
     </div>
 </div>
 <div id="delete-wrapper">
@@ -63,6 +100,7 @@
 </div>
 <!-- <script src="js/ol.js"></script> -->
 <!-- <script src="js/p-ol3.min.js"></script> -->
+<script src="js/jquery.min.js"></script>
 <script src="../dist/plottingol.js"></script>
 <script src="js/app.js"></script>
 </body>

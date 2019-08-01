@@ -9,3 +9,10 @@
 	cursor: pointer;
 	user-select: none;
 }
+.se-tooltip {
+	padding: 2px 10px;
+	background: rgba(255,255,255,0.5);
+	color: #333;
+	border: #e60a14 1px solid;
+	font-size: 12px;
+}

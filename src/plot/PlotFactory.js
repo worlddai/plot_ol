@@ -26,7 +26,11 @@ import Arc from './plots/Arc'
 
 
 export default class PlotFactory {
-
+	/**
+	 * @classdesc 创建图元的基类
+	 * @author daiyujie
+	 * @constructs
+	 */
 	static createPlot(type, points) {
 		switch (type) {
 			case PlotTypes.MARKER:
