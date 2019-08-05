@@ -47,3 +47,7 @@ npm run start  开发者模式
 ```
 npm run build  发布
 ```
+
+```
+npm run docs  编译文档
+```
