@@ -70595,7 +70595,10 @@ var POL = (function () {
     VERSION: VERSION
   });
 
-  var PlotTypes = {
+  /**
+   * @enum
+   */
+  const PlotTypes = {
   	MARKER: 'marker',
   	POLYLINE: 'polyline',
   	POLYGON: 'polygon',
@@ -70622,7 +70625,7 @@ var POL = (function () {
 
   class Plot {
       /**
-      * @classdesc 集合对象定制基类。用来实现绘制图元。
+      * @classdesc 所有图元的基类,用来实现绘制图元。
       * @constructs
       * @author daiyujie
       * @param {ol.Coordinate} points 图元的点集
@@ -70661,7 +70664,7 @@ var POL = (function () {
           return this.points.length;
       }
       /**
-  	 * 更新点集
+  	 * 更新某个索引的点
        * @param {ol.Coordinate} point 点
        * @param {index} index 位置
   	 */
@@ -70671,12 +70674,24 @@ var POL = (function () {
               this.generate();
           }
       }
+      /**
+       * 更新最后一个点
+       * @param {ol.Coordinate} point 
+       */
       updateLastPoint(point) {
           this.updatePoint(point, this.points.length - 1);
       }
+      /**
+      * @override
+      * 图元绘制逻辑.各个图元用来覆盖
+      */
       generate() {
           //--TODO
       }
+      /**
+      * @override
+      * 图元结束绘制回调
+      */
       finishDrawing() {
           //--TODO
       }
@@ -70780,7 +70795,8 @@ var POL = (function () {
   	ZERO_TOLERANCE: 0.0001,
   	//--plotedit
   	HELPER_HIDDEN_DIV: 'p-helper-hidden-div',
-  	HELPER_CONTROL_POINT_DIV: 'p-helper-control-point-div'
+  	HELPER_CONTROL_POINT_DIV: 'p-helper-control-point-div',
+  	SE_DISABLED:'se_disabled'
   };
 
   function distance$1(pnt1, pnt2) {
@@ -71963,11 +71979,15 @@ var POL = (function () {
 
   }
 
-  class PlotFactory {
-  	/**
+  /**
   	 * @classdesc 创建图元的基类
   	 * @author daiyujie
-  	 * @constructs
+   */
+  class PlotFactory {
+  	/**
+  	 * @static
+  	 * @param {PlotTypes} type 
+  	 * @param {ol.Coordinate} points 
   	 */
   	static createPlot(type, points) {
   		switch (type) {
@@ -72028,6 +72048,7 @@ var POL = (function () {
      * @classdesc 传递Feature的Event
      * 用来传递feature
      * @constructs
+     * @extends {ol.Event}
      * @author daiyujie
      * @param {String} type 事件类型
      * @param {ol.Feature} feature 图元
@@ -72037,9 +72058,25 @@ var POL = (function () {
   		this.feature = feature;
   	}
   }
+  /**
+   * 当图元被激活时触发
+   * @static
+   */
   FeatureEvent.ACTIVATE = 'activate_feature';
+  /**
+   * 当图元被取消激活时触发
+   * @static
+   */
   FeatureEvent.DEACTIVATE = 'deactivate_feature';
+  /**
+   * 当绘制结束时触发
+   * @static
+   */
   FeatureEvent.DRAW_END = 'draw_end';
+  /**
+   * 绘制开始时触发
+   * @static
+   */
   FeatureEvent.DRAW_START = 'draw_start';
 
   class DrawEvent$1 extends Event {
@@ -72048,6 +72085,7 @@ var POL = (function () {
      * @classdesc 传递Feature的Event
      * 用来传递feature
      * @constructs
+     * @extends {ol.Event}
      * @author daiyujie
      * @param {String} type 事件类型
      * @param {ol.Feature} feature 图元
@@ -72057,7 +72095,15 @@ var POL = (function () {
   		this.drawstate = drawstate;
   	}
   }
+  /**
+   * 添加控制点时触发
+   * @static
+   */
   DrawEvent$1.ADD_CONTROL_POINT = 'add_control_point';
+  /**
+   * 绘制过程中的鼠标移动事件
+   * @static
+   */
   DrawEvent$1.ADDING_MOUSE_MOVE = 'adding_mouse_move';
 
   /*eslint-disable*/
@@ -72123,6 +72169,7 @@ var POL = (function () {
   	/**
   	 * @classdesc 图元进行编辑的绘制的基类。
   	 * @author daiyujie
+  	 * @extends {ol.Observable}
   	 * @constructs
   	 * @param {ol.Map} map 地图对象
   	 */
@@ -72145,10 +72192,17 @@ var POL = (function () {
   		this.drawOverlay.setStyle(this.style);
   		this.setMap(map);
   	}
+  	/**
+  	 * @ignore
+  	 */
   	setMap(map) {
   		this.map = map;
   		this.mapViewport = this.map.getViewport();
   	}
+  	/**
+  	 * 激活绘制工具
+  	 * @param {PlotTypes} type 要绘制的图元类型 
+  	 */
   	activate(type) {
   		this.deactivate();
   		this.deactivateMapTools();
@@ -72158,6 +72212,9 @@ var POL = (function () {
   		this.drawOverlay.setMap(this.map);
   		// .addLayer();
   	}
+  	/**
+  	 * 取消激活绘制工具
+  	 */
   	deactivate() {
   		this.disconnectEventHandlers();
   		this.map.removeLayer(this.drawOverlay);
@@ -72168,10 +72225,16 @@ var POL = (function () {
   		this.plotType = null;
   		this.activateMapTools();
   	}
-
+  	/**
+  	 * 工具是否在绘制
+  	 * @return {Boolean} 是否在绘制
+  	 */
   	isDrawing() {
   		return this.plotType != null;
   	}
+  	/**
+  	 * @ignore
+  	 */
   	mapFirstClickHandler(e) {
   		this.points.push(e.coordinate);
   		this.plot = PlotFactory.createPlot(this.plotType, this.points);
@@ -72204,7 +72267,9 @@ var POL = (function () {
   		// goog.events.listen(this.mapViewport, P.Event.EventType.MOUSEMOVE,
   		// 	this.mapMouseMoveHandler, false, this);
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	mapMouseMoveHandler(e) {
   		var coordinate = e.coordinate;
   		if (distance$1(coordinate, this.points[this.points.length - 1]) < Constants.ZERO_TOLERANCE)
@@ -72223,7 +72288,9 @@ var POL = (function () {
   			position:e.coordinate
   		}));
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	mapNextClickHandler(e) {
   		if (!this.plot.freehand) {
   			if (distance$1(e.coordinate, this.points[this.points.length - 1]) < Constants.ZERO_TOLERANCE)
@@ -72245,14 +72312,18 @@ var POL = (function () {
   			this.mapDoubleClickHandler(e);
   		}
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	mapDoubleClickHandler(e) {
   		this.disconnectEventHandlers();
   		this.plot.finishDrawing();
   		e.preventDefault();
   		this.drawEnd();
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	disconnectEventHandlers() {
   		disconnectEvent(this.map, "click", this._ls_mapfirstclick);
   		disconnectEvent(this.map, "click", this._ls_mapNextClick);
@@ -72264,7 +72335,9 @@ var POL = (function () {
   		this._ls_pointmove = null;
   		this._ls_dbclick = null;
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	drawEnd(feature) {
   		this.featureSource.removeFeature(this.feature);
   		this.activateMapTools();
@@ -72276,7 +72349,9 @@ var POL = (function () {
   		this.dispatchEvent(new FeatureEvent(FeatureEvent.DRAW_END, this.feature));
   		this.feature = null;
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	deactivateMapTools() {
   		var interactions = this.map.getInteractions();
   		var length = interactions.getLength();
@@ -72289,7 +72364,9 @@ var POL = (function () {
   			}
   		}
   	}
-
+  	/**
+  	 * @ignore
+  	 */
   	activateMapTools() {
   		if (this.dblClickZoomInteraction != null) {
   			this.map.getInteractions().push(this.dblClickZoomInteraction);
@@ -72379,6 +72456,7 @@ var POL = (function () {
   	/**
   	 * @classdesc 图元进行编辑的基类。用来创建控制点，绑定控制点事件，对feature的数据进行处理
   	 * @author daiyujie
+  	 * @extends {ol.Observable}
   	 * @constructs
   	 * @param {ol.Map} map 地图对象
   	 */
@@ -72677,6 +72755,7 @@ var POL = (function () {
   	* @classdesc 传递FeatureOperator的Event
   	* 用来传递feature
   	* @constructs
+      * @extends {ol.Event}
   	* @author daiyujie
   	* @param {String} type 事件类型
   	* @param {FeatureOperator} feature 图元操作类
@@ -72686,7 +72765,15 @@ var POL = (function () {
   		this.feature_operator = feature_operator;
   	}
   }
+  /**
+   * 图元被激活时触发
+   * @static
+   */
   FeatureOperatorEvent.ACTIVATE = 'activate_feature';
+  /**
+   * 图元被取消激活时触发
+   * @static
+   */
   FeatureOperatorEvent.DEACTIVATE = 'deactivate_feature';
 
   class FTStyle {
@@ -72699,15 +72786,30 @@ var POL = (function () {
           this._style = {};
           this.isDestoryed = false;
       }
+      /**
+       * 将json类型的样式，转换为ol.style
+       * @return {ol.Style}
+       */
       parse() {
           return new Style();
       }
+      /**
+       * 序列化样式
+       * @return {JSON}
+       */
       serialize() {
           return deepcopy(this._style);
       }
+      /**
+       * 设置样式
+       * @param {JSON} json_style 
+       */
       setStyle(json_style) {
           this._style = json_style;
       }
+      /**
+       * 销毁对象
+       */
       destory() {
           this._style = {};
           this.isDestoryed = true;
@@ -72718,7 +72820,9 @@ var POL = (function () {
   class MarkerStyle extends FTStyle {
 
       /**
+      * @class MarkerStyle
       * @classdesc 点类样式
+      * @extends {FTStyle}
       * @author daiyujie
       * @constructs
       */
@@ -72731,6 +72835,9 @@ var POL = (function () {
                       src: './images/marker-begin.png',
                       offset: [0, 0],
                       opacity: 1,
+                      scale: 1,
+                      anchor: [0.5, 0.5],
+                      offset: [0, 0],
                       scale: 1
                   }
               }
@@ -72759,6 +72866,7 @@ var POL = (function () {
       /**
        * @classdesc 折线类样式
        * @author daiyujie
+       * @extends {FTStyle}
        * @constructs
        */
       constructor() {
@@ -72787,6 +72895,7 @@ var POL = (function () {
       /**
       * @classdesc 多边形类样式
       * @author daiyujie
+      * @extends {FTStyle}
       * @constructs
       */
       constructor() {
@@ -72816,13 +72925,17 @@ var POL = (function () {
 
   }
 
-  class StyleFactory {
-      /**
+  /**
        * @classdesc 样式工厂。根据图元类型生成样式对象
        * @author daiyujie
-       * @constructs
+   */
+  class StyleFactory {
+      /**
+       * @param {PlotTypes} type 类型
+       * @static
        */
       static createFTStyle(type) {
+      
           switch (type) {
               case PlotTypes.MARKER:
                   return new MarkerStyle();
@@ -72836,10 +72949,10 @@ var POL = (function () {
       }
   }
 
-  class FeatureOperator {
+  class FeatureOperator{
       /**
       * @classdesc 标绘图元操作类
-      * 提供对标绘图元的封装操作
+      * 提供对标绘图元的封装操作.所有的地图点击事件的回调函数中均有该对象，可以通过该对象实现图元的基本操作
       * @constructs
       * @author daiyujie
       * @param {ol.Feature} feature 图元
@@ -72948,6 +73061,20 @@ var POL = (function () {
           return this.name
       }
       /**
+      * 设置图元不可被点击
+      * @return {String}  名称
+      */
+      disable() {
+          this.feature.set(Constants.SE_DISABLED, true);
+      }
+      /**
+      * 设置图元可以被点击
+      * @return {String}  名称
+      */
+      enable() {
+          this.feature.set(Constants.SE_DISABLED, false);
+      }
+      /**
       * 获取图元自定义属性
       * @param {String} key 
       * @return {Object} value
@@ -72956,12 +73083,24 @@ var POL = (function () {
           return this.attrs[key];
       }
       /**
-     * 设置图元属性
+       * 设置图元属性。相同的属性键值会被覆盖
      * @param {String} key 
      * @param {Object} value
      */
       setAttribute(key, value) {
           this.attrs[key] = value;
+      }
+      /**
+       * 删除图元属性
+       * @param {String} key 
+       * @return {Boolean} 是否操作成功 
+       */
+      removeAttribute(key) {
+          if (this.attrs[key]) {
+              delete this.attrs[key];
+              return true;
+          }
+          return false;
       }
       /**
      * 迭代自定义属性
@@ -72975,6 +73114,14 @@ var POL = (function () {
           }
       }
       /**
+      * 更新对象的控制点
+      */
+      setCoordinates(coordinates) {
+          const plot = this.feature.values_.geometry;
+          if (plot)
+              plot.setPoints(coordinates);
+      }
+      /**
      * 销毁对象
      */
       destory() {
@@ -72983,6 +73130,7 @@ var POL = (function () {
           this.layer = null;
           this.attrs = {};
           this.ft_style.destory();
+
       }
       /**
        * 序列化
@@ -72995,7 +73143,8 @@ var POL = (function () {
           return {
               config: {
                   cresda_flag: true,
-                  z_index: this.getZIndex()
+                  z_index: this.getZIndex(),
+                  disabled:!!this.feature.get(Constants.SE_DISABLED)
               },
               name: this.getName(),
               ext_attr: this.attrs,
@@ -73051,9 +73200,38 @@ var POL = (function () {
   	 * @classdesc 标绘主图层封装。后续可以有多个对象。目前就中心而言应该就一个对象
   	 * 与SEIE标绘服务进行对接，加载标绘服务，编辑标绘图元，保存标绘属性。是暴露出的唯一一个类。
   	 * @author daiyujie
+  	 * @extends {ol.Observable}
   	 * @constructs
   	 * @param {ol.Map} map 地图对象
   	 * @param {Object} opts 初始化选项
+  	 * @example <caption>加载标绘，绘制标绘，保存标绘</caption>
+  	* //创建TrackingLay的工作可以由SEOL完成。逻辑也可在SEOL中封装
+  	* const plottingLayer = new PlottingLayer(map);
+  	* //--从服务器加载标绘
+  	* plottingLayer.loadFromService('1735');
+  	* //--绘制标绘
+  	* plottingLayer.addFeature('polygon');
+  	* //--监听绘制事件，从中取到FeatureOperator对象。进行一些操作
+  	* plottingLayer.on('activate_feature', function (e) {
+  		*     window.fo = e.feature_operator;
+  		*     //--TODO
+  		* })
+  		* plottingLayer.on('deactivate_feature', function (e) {
+  		*     window.fo = null;
+  		*     //--TODO
+  		* })
+  	* //--设置选中图元样式
+  	* fo.setStyle({"fill":{"color":"rgba(0,255,0,0.4)"},"stroke":{"color":"#FF0000","width":2}})
+  	* //--设置属性
+  	* fo.setAttribute('hellow','i am free');
+  	* //--其余操作参考FeatureOperator类
+  	*
+  	* //--设置层级等关联操作通过PlottingLayer对象完成
+  	* //--上移图元
+  	* plottingLayer.moveDown(fo);
+  	* //--其余操作参照api
+  	* //--保存所有图元至服务器
+  	* plottingLayer.saveToService('1735');
   	 */
   	constructor(map, opts) {
   		super();
@@ -73065,6 +73243,7 @@ var POL = (function () {
 
   		/**
            * 默认配置
+  		 * @ignore
            * @type {Object}
            */
   		this.defaults = {
@@ -73072,6 +73251,7 @@ var POL = (function () {
   		};
   		/**
            * 合并配置
+  		 * @ignore
            * @type {Object}
            */
   		this.opts = {};
@@ -73106,6 +73286,13 @@ var POL = (function () {
            * @type {Element}
            */
   		this.help_overlay_ele = null;
+
+  		/**
+           * map绑定的事件钩子
+  		 * @ignore
+           * @type {Function}
+           */
+  		this._ls_mapclick = null;
   		//--合并地图选项
   		combineOpts(this.opts, this.defaults, opts);
   		//--创建layer
@@ -73145,15 +73332,16 @@ var POL = (function () {
   		this.plotEdit.on(FeatureEvent.DEACTIVATE, (e) => {
   			this.dispatchEvent(new FeatureOperatorEvent(FeatureOperatorEvent.DEACTIVATE, this._getFeatureOperator(e.feature, this.showLayer)));
   		});
-  		this.map.on('click', (e) => {
+  		this._ls_mapclick = this.map.on('click', (e) => {
   			if (!this.plotDraw || this.plotDraw.isDrawing()) {
   				return;
   			}
   			const feature = this.map.forEachFeatureAtPixel(e.pixel, (feature, layer$$1) => {
   				return feature;
   			});
-  			if (feature) {
 
+
+  			if (feature && !feature.get(Constants.SE_DISABLED)) {
   				// 开始编辑
   				this.plotEdit.activate(feature);
 
@@ -73161,7 +73349,20 @@ var POL = (function () {
   				// 结束编辑
   				this.plotEdit.deactivate();
   			}
-  		});
+  		}).listener;
+  	}
+  	/**
+  	 * @ignore
+  	 * 移除地图绑定事件
+  	 */
+  	_unbindListener() {
+  		this.plotDraw.un([DrawEvent$1.ADD_CONTROL_POINT, DrawEvent$1.ADDING_MOUSE_MOVE, FeatureEvent.DRAW_END]);
+  		this.plotEdit.un([FeatureEvent.ACTIVATE, FeatureEvent.DEACTIVATE]);
+  		if (this._ls_mapclick) {
+  			this.map.un('click', this._ls_mapclick);
+  			this._ls_mapclick = null;
+  		}
+
   	}
   	/**
   	 * @ignore
@@ -73433,11 +73634,171 @@ var POL = (function () {
   		moveToBottom(this.feature_operators, curIndex);
   		this._resetZIndex();
   	}
+  	destory() {
+  		//--清空图元
+  		this.clearFeatures();
+  		//--移除map
+  		this.showLayer.setMap(null);
+  		this.showLayer = null;
+  		//--解绑事件
+  		this._unbindListener();
+  		//--移除编辑工具对象
+  		this.plotEdit.deactivate();
+  		this.plotEdit = null;
+  		//--移除绘制工具对象
+  		this.plotDraw.deactivate();
+  		this.plotEdit = null;
+  		//--移除帮助overlay
+  		this.map.removeOverlay(this.help_overlay);
+  		this.help_overlay = null;
+  		this.help_overlay_ele = null;
+  		this.map = null;
+  	}
+  }
 
+  class TrackingLayer extends PlottingLayer {
+
+  	/**
+  	 * @classdesc 用来做轨迹图层的图层类。包含对轨迹的一些列操作。目前一个图层只能支持一条轨迹。后续可以提供拓展
+  	 * @author daiyujie
+  	 * @constructs
+  	 * @extends {PlottingLayer}
+  	 * @param {ol.Map} map 地图对象
+  	 * @param {Object} opts 初始化选项
+  	* @example <caption>创建轨迹图层，进行轨迹记录</caption>
+  	* //创建TrackingLay的工作可以由SEOL完成。逻辑也可在SEOL中封装
+  	* const trackingLayer = new TrackingLayer(map);
+  	* //加载轨迹标绘
+  	* trackingLayer.loadFromService('1735');
+  	* //加载完之后，可以在这个图层进行标绘操作。也可以不进行，随业务逻辑控制
+  	* trackingLayer.addFeature('polygon')
+  	* //切换轨迹标绘
+  	* trackingLayer.loadFromService('1738');
+  	* //绘制一个轨迹（新建对象之后，不要调用loadFromService,直接调用绘制逻辑）
+  	* //--开始轨迹
+  	* trackingLayer.beginTrack(30,120);
+  	* //--更新轨迹
+  	* trackingLayer.updateTrack(31,121);
+  	* //--结束轨迹
+  	* trackingLayer.endTrack();
+  	* //--保存到服务器
+  	* trackingLayer.saveToService('1735');
+  	* //--销毁对象
+  	* trackingLayer.destory();
+  	*/
+  	constructor(map, opts) {
+  		super(map, opts);
+  		this.isTracking = false;
+  		this.track_coordinates = [];
+  	}
+  	/**
+  	 * 创建标注点
+  	 * @ignore
+  	 * @param {Number} lat 
+  	 * @param {Number} lng 
+  	 * @param {Boolean} isBegin 是否是开始标注
+  	 */
+  	_createMarkers(lat, lng, isBegin) {
+  		const plot = PlotFactory.createPlot(PlotTypes.MARKER, [[lng, lat]]);
+  		const feature = new Feature(plot);
+  		feature.set(Constants.SE_DISABLED, true, true);
+  		const fo = this._addFeature(feature, 1);
+  		fo.attrs = {};
+  		fo.setStyle({
+  			"image": {
+  				"icon": {
+  					"src": isBegin ? "./images/marker-begin.png" : './images/marker-current.png',
+  					"anchor": [0.5, 1],
+  				}
+  			}
+  		});
+  		return fo;
+  	}
+  	/**
+  	 * 创建标绘线
+  	 * @ignore
+  	 * @param {Array<Array<Number>>} coordinates 
+  	 */
+  	_createLine(coordinates) {
+  		const plot = PlotFactory.createPlot(PlotTypes.POLYLINE, coordinates);
+  		const feature = new Feature(plot);
+  		feature.set(Constants.SE_DISABLED, true, true);
+  		const fo = this._addFeature(feature, 1);
+  		fo.attrs = {};
+  		return fo;
+  	}
+  	/**
+  	 * 开始轨迹记录
+  	 * @param {Number} lat 
+  	 * @param {Number} lng 
+  	 */
+  	beginTrack(lat, lng) {
+  		if (this.isTracking)
+  			return;
+  		this.isTracking = true;
+  		this.fo_begin_points = this._createMarkers(lat, lng, true);
+  		this.track_coordinates.push([lng, lat]);
+  	}
+  	/**
+  	 * 更新记录点
+  	 * @param {Number} lat 
+  	 * @param {Number} lng 
+  	 */
+  	updateTrack(lat, lng) {
+  		this.track_coordinates.push([lng, lat]);
+  		if (this.track_coordinates.length < 2)
+  			return;
+
+  		if (!this.fo_end_points)
+  			this.fo_end_points = this._createMarkers(lat, lng);
+  		this.fo_end_points.setCoordinates([[lng, lat]]);
+
+  		if (!this.fo_polyline) {
+  			this.fo_polyline = this._createLine(this.track_coordinates);
+  		}
+  		this.fo_polyline.setCoordinates(this.track_coordinates);
+  	}
+  	/**
+  	 * 结束轨迹记录
+  	 * @param {Number} lat 
+  	 * @param {Number} lng 
+  	 */
+  	endTrack() {
+  		this.isTracking = false;
+  	}
+  	/**
+  	 * 设置轨迹图层的属性
+  	 * @param {String} key 
+  	 * @param {Object} value 
+  	 */
+  	setAttribute(key, value) {
+  		if (!this.fo_polyline)
+  			return
+  		this.fo_polyline.setAttribute(key, value);
+  		return true;
+  	}
+  	/**
+  	 * 获取轨迹属性
+  	 * @param {String} key 
+  	 */
+  	getAttribute(key) {
+  		if (!this.fo_polyline)
+  			return null;
+  		return this.fo_polyline.getAttribute(key)
+  	}
+  	/**
+  	 * @override
+  	 */
+  	destory() {
+  		super.destory();
+  		this.isTracking = false;
+  		this.track_coordinates = [];
+  	}
   }
 
   var index = {
   	PlottingLayer,
+  	TrackingLayer,
   	PlotTypes,
   	FeatureOperatorEvent,
   	OL

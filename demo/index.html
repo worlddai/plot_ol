@@ -55,7 +55,10 @@
 		<button type="button" onclick="plotOperator('moveDown')">下移</button>
 		<button type="button" onclick="plotOperator('setToTop')">置顶</button>
 		<button type="button" onclick="plotOperator('setToBottom')">置底</button>
-		<button type="button" onclick="plotOperator('clearFeatures',true)">全部清除</button>
+        <button type="button" onclick="plotOperator('clearFeatures',true)">全部清除</button>
+        <button type="button" onclick="setPlotActive(false)">屏蔽点击</button>
+        <button type="button" onclick="setPlotActive(true)">激活点击</button>
+        
     </div>
     <div>
         添加属性
@@ -93,6 +96,15 @@
         <p class="aboutText">2 新增图元层级操作</p>
         <p class="aboutText">3 新增样式，属性编辑</p>
         <p class="aboutText">4 实现序列化，可以按照自己的服务器存储格式修改序列号代码，实现保存和加载.参加</p>
+        
+        <p class="aboutText">2019-08-05 :</p>
+
+        <p class="aboutText">1 增加文档工具，生成API文档（需要重新install才可以使用）npm run docs</p>
+        <p class="aboutText">2 标绘图元新增disable,enable方法</p>
+        <p class="aboutText">3 新增TrackingLayer类，可以用来绘制轨迹。POL.TrackingLayer</p>
+
+       
+        
     </div>
 </div>
 <div id="delete-wrapper">

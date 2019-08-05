@@ -53,6 +53,7 @@ function init() {
         activeDelBtn();
     })
     g_pol_layer.on(POL.FeatureOperatorEvent.DEACTIVATE, function (e) {
+        window.g_op_feature =null;
         deactiveDelBtn();
         document.getElementById('style-input').value = ""
         $('#property-show').empty();
@@ -101,6 +102,17 @@ function plotOperator(method, no_need_feature) {
     }
     g_pol_layer[method](g_op_feature);
 }
+function setPlotActive(isActive) {
+    if (!g_op_feature) {
+        alert('请先选择一个标绘图元.屏蔽点击后将无法通过点击获取图元')
+        return;
+    }
+    if(isActive)
+        g_op_feature.enable()
+    else
+        g_op_feature.disable()
+}
+
 function setStyle(params) {
     if (!g_op_feature) {
         alert('请先选择一个标绘图元')

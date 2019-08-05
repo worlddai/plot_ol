@@ -12,7 +12,7 @@ import PlotFactory from './PlotFactory'
 import Constants from './Constants'
 import { combineOpts, deepcopy } from '../util/core'
 import * as ArrTools from '../util/array'
-import Ajax from '../util/seieajax';
+// import Ajax from '../util/seieajax';
 
 import * as ol from '../ol.js';
 class PlottingLayer extends Observable {
