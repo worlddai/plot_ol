@@ -1,4 +1,7 @@
-export default {
+/**
+ * @enum
+ */
+const PlotTypes = {
 	MARKER: 'marker',
 	POLYLINE: 'polyline',
 	POLYGON: 'polygon',
@@ -22,3 +25,4 @@ export default {
 	TAILED_ATTACK_ARROW:'tailed_attack_arrow',
 	TAILED_SQUAD_COMBAT:'tailed_squad_combat'
 }
+export default PlotTypes;

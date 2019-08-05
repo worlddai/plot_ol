@@ -5,5 +5,6 @@ export default {
 	ZERO_TOLERANCE: 0.0001,
 	//--plotedit
 	HELPER_HIDDEN_DIV: 'p-helper-hidden-div',
-	HELPER_CONTROL_POINT_DIV: 'p-helper-control-point-div'
+	HELPER_CONTROL_POINT_DIV: 'p-helper-control-point-div',
+	SE_DISABLED:'se_disabled'
 }

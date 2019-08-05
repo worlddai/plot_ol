@@ -3,11 +3,12 @@ import Style from '../../ol/style/Style'
 import Stroke from '../../ol/style/Stroke'
 import Fill from '../../ol/style/Fill'
 
-export default class PolyLineStyle extends FTStyle {
+class PolyLineStyle extends FTStyle {
 
     /**
      * @classdesc 折线类样式
      * @author daiyujie
+     * @extends {FTStyle}
      * @constructs
      */
     constructor() {
@@ -31,3 +32,5 @@ export default class PolyLineStyle extends FTStyle {
         });
     }
 }
+
+export default PolyLineStyle

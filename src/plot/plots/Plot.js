@@ -1,7 +1,7 @@
 
-export default class Plot {
+class Plot {
     /**
-    * @classdesc 集合对象定制基类。用来实现绘制图元。
+    * @classdesc 所有图元的基类,用来实现绘制图元。
     * @constructs
     * @author daiyujie
     * @param {ol.Coordinate} points 图元的点集
@@ -40,7 +40,7 @@ export default class Plot {
         return this.points.length;
     }
     /**
-	 * 更新点集
+	 * 更新某个索引的点
      * @param {ol.Coordinate} point 点
      * @param {index} index 位置
 	 */
@@ -50,17 +50,29 @@ export default class Plot {
             this.generate();
         }
     }
+    /**
+     * 更新最后一个点
+     * @param {ol.Coordinate} point 
+     */
     updateLastPoint(point) {
         this.updatePoint(point, this.points.length - 1);
     }
+    /**
+    * @override
+    * 图元绘制逻辑.各个图元用来覆盖
+    */
     generate() {
         //--TODO
     }
+    /**
+    * @override
+    * 图元结束绘制回调
+    */
     finishDrawing() {
         //--TODO
     }
 }
-
+export default Plot;
 
 
 

@@ -2,10 +2,11 @@ import FTStyle from "./Style";
 import Style from '../../ol/style/Style'
 import Stroke from '../../ol/style/Stroke'
 import Fill from '../../ol/style/Fill'
-export default class PolygonStyle extends FTStyle {
+class PolygonStyle extends FTStyle {
     /**
     * @classdesc 多边形类样式
     * @author daiyujie
+    * @extends {FTStyle}
     * @constructs
     */
     constructor() {
@@ -34,3 +35,4 @@ export default class PolygonStyle extends FTStyle {
 
 
 }
+export default PolygonStyle

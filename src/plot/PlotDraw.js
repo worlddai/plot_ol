@@ -7,11 +7,12 @@ import Constants from './Constants'
 import FeatureEvent from './events/FeatureEvent'
 import DrawEvent from './events/DrawEvent'
 import { connectEvent, disconnectEvent } from '../util/core'
-export default class PlotDraw extends Observable {
+class PlotDraw extends Observable {
 
 	/**
 	 * @classdesc 图元进行编辑的绘制的基类。
 	 * @author daiyujie
+	 * @extends {ol.Observable}
 	 * @constructs
 	 * @param {ol.Map} map 地图对象
 	 */
@@ -34,10 +35,17 @@ export default class PlotDraw extends Observable {
 		this.drawOverlay.setStyle(this.style);
 		this.setMap(map);
 	}
+	/**
+	 * @ignore
+	 */
 	setMap(map) {
 		this.map = map;
 		this.mapViewport = this.map.getViewport();
 	}
+	/**
+	 * 激活绘制工具
+	 * @param {PlotTypes} type 要绘制的图元类型 
+	 */
 	activate(type) {
 		this.deactivate();
 		this.deactivateMapTools();
@@ -47,6 +55,9 @@ export default class PlotDraw extends Observable {
 		this.drawOverlay.setMap(this.map)
 		// .addLayer();
 	}
+	/**
+	 * 取消激活绘制工具
+	 */
 	deactivate() {
 		this.disconnectEventHandlers();
 		this.map.removeLayer(this.drawOverlay);
@@ -57,10 +68,16 @@ export default class PlotDraw extends Observable {
 		this.plotType = null;
 		this.activateMapTools();
 	}
-
+	/**
+	 * 工具是否在绘制
+	 * @return {Boolean} 是否在绘制
+	 */
 	isDrawing() {
 		return this.plotType != null;
 	}
+	/**
+	 * @ignore
+	 */
 	mapFirstClickHandler(e) {
 		this.points.push(e.coordinate);
 		this.plot = PlotFactory.createPlot(this.plotType, this.points);
@@ -93,7 +110,9 @@ export default class PlotDraw extends Observable {
 		// goog.events.listen(this.mapViewport, P.Event.EventType.MOUSEMOVE,
 		// 	this.mapMouseMoveHandler, false, this);
 	}
-
+	/**
+	 * @ignore
+	 */
 	mapMouseMoveHandler(e) {
 		var coordinate = e.coordinate;
 		if (distance(coordinate, this.points[this.points.length - 1]) < Constants.ZERO_TOLERANCE)
@@ -112,7 +131,9 @@ export default class PlotDraw extends Observable {
 			position:e.coordinate
 		}));
 	}
-
+	/**
+	 * @ignore
+	 */
 	mapNextClickHandler(e) {
 		if (!this.plot.freehand) {
 			if (distance(e.coordinate, this.points[this.points.length - 1]) < Constants.ZERO_TOLERANCE)
@@ -134,14 +155,18 @@ export default class PlotDraw extends Observable {
 			this.mapDoubleClickHandler(e);
 		}
 	}
-
+	/**
+	 * @ignore
+	 */
 	mapDoubleClickHandler(e) {
 		this.disconnectEventHandlers();
 		this.plot.finishDrawing();
 		e.preventDefault();
 		this.drawEnd();
 	}
-
+	/**
+	 * @ignore
+	 */
 	disconnectEventHandlers() {
 		disconnectEvent(this.map, "click", this._ls_mapfirstclick);
 		disconnectEvent(this.map, "click", this._ls_mapNextClick);
@@ -153,7 +178,9 @@ export default class PlotDraw extends Observable {
 		this._ls_pointmove = null;
 		this._ls_dbclick = null;
 	}
-
+	/**
+	 * @ignore
+	 */
 	drawEnd(feature) {
 		this.featureSource.removeFeature(this.feature);
 		this.activateMapTools();
@@ -165,7 +192,9 @@ export default class PlotDraw extends Observable {
 		this.dispatchEvent(new FeatureEvent(FeatureEvent.DRAW_END, this.feature));
 		this.feature = null;
 	}
-
+	/**
+	 * @ignore
+	 */
 	deactivateMapTools() {
 		var interactions = this.map.getInteractions();
 		var length = interactions.getLength();
@@ -178,7 +207,9 @@ export default class PlotDraw extends Observable {
 			}
 		}
 	}
-
+	/**
+	 * @ignore
+	 */
 	activateMapTools() {
 		if (this.dblClickZoomInteraction != null) {
 			this.map.getInteractions().push(this.dblClickZoomInteraction);
@@ -187,3 +218,4 @@ export default class PlotDraw extends Observable {
 	}
 
 }
+export default PlotDraw;

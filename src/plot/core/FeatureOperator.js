@@ -1,9 +1,10 @@
 import { guid } from '../../util/core'
 import StyleFactory from '../style/StyleFactory'
-export default class FeatureOperator {
+import Constants from '../Constants'
+class FeatureOperator{
     /**
     * @classdesc 标绘图元操作类
-    * 提供对标绘图元的封装操作
+    * 提供对标绘图元的封装操作.所有的地图点击事件的回调函数中均有该对象，可以通过该对象实现图元的基本操作
     * @constructs
     * @author daiyujie
     * @param {ol.Feature} feature 图元
@@ -112,6 +113,20 @@ export default class FeatureOperator {
         return this.name
     }
     /**
+    * 设置图元不可被点击
+    * @return {String}  名称
+    */
+    disable() {
+        this.feature.set(Constants.SE_DISABLED, true);
+    }
+    /**
+    * 设置图元可以被点击
+    * @return {String}  名称
+    */
+    enable() {
+        this.feature.set(Constants.SE_DISABLED, false);
+    }
+    /**
     * 获取图元自定义属性
     * @param {String} key 
     * @return {Object} value
@@ -120,12 +135,24 @@ export default class FeatureOperator {
         return this.attrs[key];
     }
     /**
-   * 设置图元属性
+     * 设置图元属性。相同的属性键值会被覆盖
    * @param {String} key 
    * @param {Object} value
    */
     setAttribute(key, value) {
         this.attrs[key] = value;
+    }
+    /**
+     * 删除图元属性
+     * @param {String} key 
+     * @return {Boolean} 是否操作成功 
+     */
+    removeAttribute(key) {
+        if (this.attrs[key]) {
+            delete this.attrs[key];
+            return true;
+        }
+        return false;
     }
     /**
    * 迭代自定义属性
@@ -139,6 +166,14 @@ export default class FeatureOperator {
         }
     }
     /**
+    * 更新对象的控制点
+    */
+    setCoordinates(coordinates) {
+        const plot = this.feature.values_.geometry;
+        if (plot)
+            plot.setPoints(coordinates)
+    }
+    /**
    * 销毁对象
    */
     destory() {
@@ -147,6 +182,7 @@ export default class FeatureOperator {
         this.layer = null;
         this.attrs = {};
         this.ft_style.destory();
+
     }
     /**
      * 序列化
@@ -159,7 +195,8 @@ export default class FeatureOperator {
         return {
             config: {
                 cresda_flag: true,
-                z_index: this.getZIndex()
+                z_index: this.getZIndex(),
+                disabled:!!this.feature.get(Constants.SE_DISABLED)
             },
             name: this.getName(),
             ext_attr: this.attrs,
@@ -174,3 +211,4 @@ export default class FeatureOperator {
         }
     }
 }
+export default FeatureOperator;

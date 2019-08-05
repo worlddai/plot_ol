@@ -4,10 +4,12 @@ import Style from '../../ol/style/Style'
 import Stroke from '../../ol/style/Stroke'
 import Fill from '../../ol/style/Fill'
 import Icon from '../../ol/style/Icon'
-export default class MarkerStyle extends FTStyle {
+class MarkerStyle extends FTStyle {
 
     /**
+    * @class MarkerStyle
     * @classdesc 点类样式
+    * @extends {FTStyle}
     * @author daiyujie
     * @constructs
     */
@@ -20,6 +22,9 @@ export default class MarkerStyle extends FTStyle {
                     src: './images/marker-begin.png',
                     offset: [0, 0],
                     opacity: 1,
+                    scale: 1,
+                    anchor: [0.5, 0.5],
+                    offset: [0, 0],
                     scale: 1
                 }
             }
@@ -42,3 +47,4 @@ export default class MarkerStyle extends FTStyle {
   
 
 }
+export default MarkerStyle

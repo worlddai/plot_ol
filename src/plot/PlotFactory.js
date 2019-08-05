@@ -24,12 +24,15 @@ import TailedSquadCombat from './plots/TailedSquadCombat'
 
 import Arc from './plots/Arc'
 
-
-export default class PlotFactory {
 	/**
 	 * @classdesc 创建图元的基类
 	 * @author daiyujie
-	 * @constructs
+ */
+class PlotFactory {
+	/**
+	 * @static
+	 * @param {PlotTypes} type 
+	 * @param {ol.Coordinate} points 
 	 */
 	static createPlot(type, points) {
 		switch (type) {
@@ -83,3 +86,4 @@ export default class PlotFactory {
 	}
 
 }
+export default PlotFactory

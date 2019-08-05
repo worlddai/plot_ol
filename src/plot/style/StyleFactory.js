@@ -3,14 +3,17 @@ import PloylineStyle from './PloyLineStyle'
 import PloygonStyle from './PloygonStyle'
 
 import PlotTypes from './../PlotTypes'
-
-export default class StyleFactory {
     /**
      * @classdesc 样式工厂。根据图元类型生成样式对象
      * @author daiyujie
-     * @constructs
+ */
+class StyleFactory {
+    /**
+     * @param {PlotTypes} type 类型
+     * @static
      */
     static createFTStyle(type) {
+    
         switch (type) {
             case PlotTypes.MARKER:
                 return new MarkerStyle();
@@ -23,3 +26,5 @@ export default class StyleFactory {
         return new PloygonStyle();
     }
 }
+
+export default StyleFactory

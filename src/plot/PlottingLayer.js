@@ -9,20 +9,50 @@ import FeatureOperatorEvent from './events/FeatureOperatorEvent'
 import DrawEvent from './events/DrawEvent'
 import FeatureOperator from './core/FeatureOperator'
 import PlotFactory from './PlotFactory'
+import Constants from './Constants'
 import { combineOpts, deepcopy } from '../util/core'
 import * as ArrTools from '../util/array'
-// import Ajax from '../util/seieajax';
+import Ajax from '../util/seieajax';
 
 import * as ol from '../ol.js';
-export default class PlottingLayer extends Observable {
+class PlottingLayer extends Observable {
 
 	/**
 	 * @classdesc 标绘主图层封装。后续可以有多个对象。目前就中心而言应该就一个对象
 	 * 与SEIE标绘服务进行对接，加载标绘服务，编辑标绘图元，保存标绘属性。是暴露出的唯一一个类。
 	 * @author daiyujie
+	 * @extends {ol.Observable}
 	 * @constructs
 	 * @param {ol.Map} map 地图对象
 	 * @param {Object} opts 初始化选项
+	 * @example <caption>加载标绘，绘制标绘，保存标绘</caption>
+	* //创建TrackingLay的工作可以由SEOL完成。逻辑也可在SEOL中封装
+	* const plottingLayer = new PlottingLayer(map);
+	* //--从服务器加载标绘
+	* plottingLayer.loadFromService('1735');
+	* //--绘制标绘
+	* plottingLayer.addFeature('polygon');
+	* //--监听绘制事件，从中取到FeatureOperator对象。进行一些操作
+	* plottingLayer.on('activate_feature', function (e) {
+		*     window.fo = e.feature_operator;
+		*     //--TODO
+		* })
+		* plottingLayer.on('deactivate_feature', function (e) {
+		*     window.fo = null;
+		*     //--TODO
+		* })
+	* //--设置选中图元样式
+	* fo.setStyle({"fill":{"color":"rgba(0,255,0,0.4)"},"stroke":{"color":"#FF0000","width":2}})
+	* //--设置属性
+	* fo.setAttribute('hellow','i am free');
+	* //--其余操作参考FeatureOperator类
+	*
+	* //--设置层级等关联操作通过PlottingLayer对象完成
+	* //--上移图元
+	* plottingLayer.moveDown(fo);
+	* //--其余操作参照api
+	* //--保存所有图元至服务器
+	* plottingLayer.saveToService('1735');
 	 */
 	constructor(map, opts) {
 		super();
@@ -34,6 +64,7 @@ export default class PlottingLayer extends Observable {
 
 		/**
          * 默认配置
+		 * @ignore
          * @type {Object}
          */
 		this.defaults = {
@@ -41,6 +72,7 @@ export default class PlottingLayer extends Observable {
 		}
 		/**
          * 合并配置
+		 * @ignore
          * @type {Object}
          */
 		this.opts = {};
@@ -75,6 +107,13 @@ export default class PlottingLayer extends Observable {
          * @type {Element}
          */
 		this.help_overlay_ele = null;
+
+		/**
+         * map绑定的事件钩子
+		 * @ignore
+         * @type {Function}
+         */
+		this._ls_mapclick = null;
 		//--合并地图选项
 		combineOpts(this.opts, this.defaults, opts)
 		//--创建layer
@@ -114,15 +153,16 @@ export default class PlottingLayer extends Observable {
 		this.plotEdit.on(FeatureEvent.DEACTIVATE, (e) => {
 			this.dispatchEvent(new FeatureOperatorEvent(FeatureOperatorEvent.DEACTIVATE, this._getFeatureOperator(e.feature, this.showLayer)));
 		})
-		this.map.on('click', (e) => {
+		this._ls_mapclick = this.map.on('click', (e) => {
 			if (!this.plotDraw || this.plotDraw.isDrawing()) {
 				return;
 			}
 			const feature = this.map.forEachFeatureAtPixel(e.pixel, (feature, layer) => {
 				return feature;
 			});
-			if (feature) {
 
+
+			if (feature && !feature.get(Constants.SE_DISABLED)) {
 				// 开始编辑
 				this.plotEdit.activate(feature);
 
@@ -130,7 +170,20 @@ export default class PlottingLayer extends Observable {
 				// 结束编辑
 				this.plotEdit.deactivate();
 			}
-		})
+		}).listener
+	}
+	/**
+	 * @ignore
+	 * 移除地图绑定事件
+	 */
+	_unbindListener() {
+		this.plotDraw.un([DrawEvent.ADD_CONTROL_POINT, DrawEvent.ADDING_MOUSE_MOVE, FeatureEvent.DRAW_END])
+		this.plotEdit.un([FeatureEvent.ACTIVATE, FeatureEvent.DEACTIVATE])
+		if (this._ls_mapclick) {
+			this.map.un('click', this._ls_mapclick)
+			this._ls_mapclick = null;
+		}
+
 	}
 	/**
 	 * @ignore
@@ -402,5 +455,26 @@ export default class PlottingLayer extends Observable {
 		ArrTools.moveToBottom(this.feature_operators, curIndex);
 		this._resetZIndex();
 	}
-
+	destory() {
+		//--清空图元
+		this.clearFeatures();
+		//--移除map
+		this.showLayer.setMap(null);
+		this.showLayer = null;
+		//--解绑事件
+		this._unbindListener();
+		//--移除编辑工具对象
+		this.plotEdit.deactivate();
+		this.plotEdit = null;
+		//--移除绘制工具对象
+		this.plotDraw.deactivate();
+		this.plotEdit = null;
+		//--移除帮助overlay
+		this.map.removeOverlay(this.help_overlay);
+		this.help_overlay = null;
+		this.help_overlay_ele = null;
+		this.map = null;
+	}
 }
+
+export default PlottingLayer;

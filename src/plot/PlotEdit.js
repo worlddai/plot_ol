@@ -4,11 +4,12 @@ import Constants from './Constants'
 import * as DomUtils from '../util/dom_util';
 import FeatureEvent from './events/FeatureEvent'
 import { connectEvent, disconnectEvent } from '../util/core'
-export default class PlotEdit extends ol.Observable {
+class PlotEdit extends ol.Observable {
 
 	/**
 	 * @classdesc 图元进行编辑的基类。用来创建控制点，绑定控制点事件，对feature的数据进行处理
 	 * @author daiyujie
+	 * @extends {ol.Observable}
 	 * @constructs
 	 * @param {ol.Map} map 地图对象
 	 */
@@ -301,3 +302,4 @@ export default class PlotEdit extends ol.Observable {
 		}
 	};
 }
+export default PlotEdit;
