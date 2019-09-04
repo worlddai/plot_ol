@@ -72832,7 +72832,7 @@ var POL = (function () {
               image: {
                   //--ol.Image 的全部属性
                   icon: {
-                      src: './images/marker-begin.png',
+                      src: './assets/marker-begin.png',
                       offset: [0, 0],
                       opacity: 1,
                       scale: 1,

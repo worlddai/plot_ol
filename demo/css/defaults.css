@@ -115,6 +115,10 @@ html, body, #map {
     background: rgba(100, 100, 100, 200);
     font-size: 14px;
 }
+#updateContainer #aboutContent
+{
+    height:400px;
+}
 
 .aboutText{
     padding-left: 5px;
