@@ -3,18 +3,25 @@
   "version": "1.0.0",
   "description": "Example using OpenLayers with Rollup",
   "scripts": {
-    "start": "rollup --config rollup.config.js --watch",
-    "build": "rollup --config rollup.config.js",
+    "start": "rollup --config rollup.config.normal.js --watch",
+    "start-ie": "rollup --config rollup.config.ie.js --watch",
+    "build": "rollup --config rollup.config.normal.js",
+    "build-ie": "rollup --config rollup.config.ie.js",
     "docs": "node_modules/.bin/jsdoc --configure jsdoc.json --verbose"
   },
   "devDependencies": {
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
     "jsdoc": "^3.6.3",
-    "rollup": "^0.61.2",
-    "rollup-plugin-commonjs": "^9.1.3",
-    "rollup-plugin-node-resolve": "^3.3.0",
+    "rollup": "^1.21.4",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-json": "^2.3.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-terser": "^1.0.1"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.6.0",
     "ol": "^5.1.2"
   }
 }

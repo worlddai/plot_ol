@@ -103,8 +103,9 @@
         <p class="aboutText">2 标绘图元新增disable,enable方法</p>
         <p class="aboutText">3 新增TrackingLayer类，可以用来绘制轨迹。POL.TrackingLayer</p>
 
-       
-        
+        <p class="aboutText">2019-12-06 :</p>
+        <p class="aboutText">IE 支持 通过 npm run build-ie  再在应用html中引入 dist/polyfill.js 可以支持ie</p>
+      
     </div>
 </div>
 <div id="delete-wrapper">
@@ -113,6 +114,8 @@
 <!-- <script src="js/ol.js"></script> -->
 <!-- <script src="js/p-ol3.min.js"></script> -->
 <script src="js/jquery.min.js"></script>
+<!-- 不需支持IE可以去掉-->
+<script src="../dist/polyfill.js"></script>
 <script src="../dist/plottingol.js"></script>
 <script src="js/app.js"></script>
 </body>

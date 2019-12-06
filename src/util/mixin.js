@@ -17,10 +17,11 @@ function mix(...mixins) {
 }
 
 function copyProperties(target, source,deep) {
-    for (let key of Reflect.ownKeys(source)) {
+    for (var key of Reflect.ownKeys(source)) {
         if (key !== 'constructor'
             && key !== 'prototype'
             && key !== 'name'
+            && key !== 'length'//--fix ie不支持拷贝函数对象的length属性
         ) {
             let desc = Object.getOwnPropertyDescriptor(source, key);
             Object.defineProperty(target, key, desc);

@@ -8,6 +8,8 @@
 
 在线体验 http://61.155.169.52:8080/PlotOl/demo/index.html
 
+## 现在已经支持IE
+
 版本V1.0，实现的功能包括：
 - 标绘符号绘制；
 - 标绘符号编辑；
@@ -26,6 +28,9 @@
 - 标绘图元新增disable,enable方法
 - 新增TrackingLayer类，可以用来绘制轨迹。POL.TrackingLayer
 
+当前版本V1.1.2，实现的功能包括：
+- IE 支持 通过 npm run build-ie  再在应用html中引入 dist/polyfill.js 可以支持ie
+
 ### 演示截图
 <img src="https://img-blog.csdnimg.cn/20190801185228982.png" width=1400 height=670>
 
@@ -43,9 +48,17 @@ npm install  安装
 npm run start  开发者模式
 ```
 
+```
+npm run start-ie  开发者模式(ie)
+```
+
 
 ```
-npm run build  发布
+npm run build  发布普通兼容性浏览器
+```
+
+```
+npm run build-ie  发布兼容性ie版本
 ```
 
 ```
