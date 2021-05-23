@@ -1,5 +1,5 @@
 {
-  "name": "ol-rollup",
+  "name": "plot-ol",
   "version": "1.0.0",
   "description": "Example using OpenLayers with Rollup",
   "scripts": {
@@ -20,6 +20,8 @@
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-terser": "^1.0.1"
   },
+  "author": "daiyujie 576981389@qq.com",
+  "license":"MIT",
   "dependencies": {
     "@babel/polyfill": "^7.6.0",
     "ol": "^5.1.2"
